@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>cn.tiangong</groupId>
+    <artifactId>tiangong-dependencies</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <description>天工 ERP · 统一依赖版本管理 BOM</description>
+
+    <properties>
+        <spring.boot.version>3.4.5</spring.boot.version>
+        <mybatis-plus.version>3.5.7</mybatis-plus.version>
+        <jjwt.version>0.12.6</jjwt.version>
+        <hutool.version>5.8.32</hutool.version>
+        <springdoc.version>2.6.0</springdoc.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.dromara.x-file-storage</groupId>
+                <artifactId>x-file-storage-spring</artifactId>
+                <version>2.2.1</version>
+            </dependency>
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>8.5.17</version>
+            </dependency>
+            <!-- Spring Boot 官方 BOM -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- 天工框架 starters -->
+            <dependency>
+                <groupId>cn.tiangong</groupId>
+                <artifactId>tiangong-spring-boot-starter-web</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.tiangong</groupId>
+                <artifactId>tiangong-spring-boot-starter-security</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.tiangong</groupId>
+                <artifactId>tiangong-spring-boot-starter-mybatis</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.tiangong</groupId>
+                <artifactId>tiangong-spring-boot-starter-redis</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.tiangong</groupId>
+                <artifactId>tiangong-spring-boot-starter-biz-common</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+
+            <!-- 天工业务模块 -->
+            <dependency><groupId>cn.tiangong</groupId><artifactId>tiangong-module-system</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
+            <dependency><groupId>cn.tiangong</groupId><artifactId>tiangong-module-bas</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
+            <dependency><groupId>cn.tiangong</groupId><artifactId>tiangong-module-infra</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
+            <dependency><groupId>cn.tiangong</groupId><artifactId>tiangong-module-file</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
+            <dependency><groupId>cn.tiangong</groupId><artifactId>tiangong-module-im</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
+            <dependency><groupId>cn.tiangong</groupId><artifactId>tiangong-module-bpm</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
+            <dependency><groupId>cn.tiangong</groupId><artifactId>tiangong-module-pur</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
+            <dependency><groupId>cn.tiangong</groupId><artifactId>tiangong-module-sal</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
+            <dependency><groupId>cn.tiangong</groupId><artifactId>tiangong-module-stk</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
+            <dependency><groupId>cn.tiangong</groupId><artifactId>tiangong-module-fin</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
+            <dependency><groupId>cn.tiangong</groupId><artifactId>tiangong-module-mrp</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
+            <dependency><groupId>cn.tiangong</groupId><artifactId>tiangong-module-crm</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
+            <dependency><groupId>cn.tiangong</groupId><artifactId>tiangong-module-hr</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
+            <dependency><groupId>cn.tiangong</groupId><artifactId>tiangong-module-rpt</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
+
+            <!-- ORM -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <!-- JWT -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+
+            <!-- 工具 -->
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+
+            <!-- API 文档 -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>

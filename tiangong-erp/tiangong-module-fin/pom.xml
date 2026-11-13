@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>cn.tiangong</groupId>
+        <artifactId>tiangong-erp</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>tiangong-module-fin</artifactId>
+    <description>ERP 财务管理：应收应付台账 + 收付款核销 + 凭证模板引擎（业务财务一体化）</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>cn.tiangong</groupId>
+            <artifactId>tiangong-spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.tiangong</groupId>
+            <artifactId>tiangong-spring-boot-starter-mybatis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.tiangong</groupId>
+            <artifactId>tiangong-spring-boot-starter-biz-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.tiangong</groupId>
+            <artifactId>tiangong-module-bas</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

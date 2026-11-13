@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: tiangong-server
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 520MB
+
+server:
+  port: 48080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+
+# Jackson 全局（Long→String 已在 starter 中定制）
+jackson:
+  date-format: yyyy-MM-dd HH:mm:ss
+  time-zone: GMT+8
+
+# API 文档
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+logging:
+  level:
+    cn.tiangong: info
+    org.springframework.security: warn
+
+# 安全：WebSocket 握手不走 Authorization 头（token 在路径参数中），显式放行
+tiangong:
+  security:
+    permit-all-urls:
+      - /ws/**
+
+# x-file-storage（文件传输底座）：local-plus 语义 = storage-path 是磁盘根目录，base-path 是其下相对子目录
+dromara:
+  x-file-storage:
+    default-platform: local-plus-1
+    local-plus:
+      - platform: local-plus-1
+        enable-storage: true
+        base-path: ''
+        storage-path: ${user.home}/tiangong-files/

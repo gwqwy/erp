@@ -1,0 +1,25 @@
+# 构建产物
+target/
+dist/
+node_modules/
+
+# 日志与临时文件
+*.log
+startup-log.txt
+6}
+
+# 安全扫描历史（仓库外另有留存）
+.mimosa/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# 运行时数据
+*.h2.db
+*.lock
+
+# OS
+Thumbs.db
+.DS_Store
