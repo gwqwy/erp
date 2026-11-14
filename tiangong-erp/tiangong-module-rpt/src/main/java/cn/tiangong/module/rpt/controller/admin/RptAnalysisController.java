@@ -118,4 +118,56 @@ public class RptAnalysisController {
         String t = to == null || to.isBlank() ? LocalDate.now().format(D) : to;
         return new String[]{f, t};
     }
+
+    /** 供应商对账单：期初 + 入库/付款明细 + 期末 */
+    @GetMapping("/supplier-statement")
+    @PreAuthorize("@ss.hasPermission('rpt:statement:query')")
+    public CommonResult<Map<String, Object>> supplierStatement(
+            @RequestParam("partnerId") Long partnerId,
+            @RequestParam String from,
+            @RequestParam String to) {
+        BigDecimal opening = analysisMapper.supplierOpeningDebit(partnerId, from)
+                .subtract(analysisMapper.supplierOpeningCredit(partnerId, from));
+        List<Map<String, Object>> rows = new ArrayList<>();
+        rows.addAll(analysisMapper.supplierInboundRows(partnerId, from, to));
+        rows.addAll(analysisMapper.supplierPaymentRows(partnerId, from, to));
+        rows.sort(Comparator.comparing(m -> String.valueOf(m.get("date"))));
+        BigDecimal balance = opening;
+        for (Map<String, Object> row : rows) {
+            BigDecimal debit = new BigDecimal(String.valueOf(row.getOrDefault("debit", "0")));
+            BigDecimal credit = new BigDecimal(String.valueOf(row.getOrDefault("credit", "0")));
+            balance = balance.add(debit).subtract(credit);
+            row.put("balance", balance);
+            row.put("kind", debit.signum() > 0 ? "采购入库" : "付款");
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("opening", opening);
+        result.put("rows", rows);
+        result.put("closing", balance);
+        result.put("totalDebit", rows.stream().map(x -> new BigDecimal(String.valueOf(x.getOrDefault("debit", "0"))))
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        result.put("totalCredit", rows.stream().map(x -> new BigDecimal(String.valueOf(x.getOrDefault("credit", "0"))))
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        return CommonResult.success(result);
+    }
+
+    /** 收发存汇总：期初 = 期末 - 收 + 发 */
+    @GetMapping("/stock-flow")
+    @PreAuthorize("@ss.hasPermission('rpt:stockflow:query')")
+    public CommonResult<List<Map<String, Object>>> stockFlow(
+            @RequestParam String from,
+            @RequestParam String to) {
+        List<Map<String, Object>> rows = analysisMapper.stockFlowSummary(from, to);
+        for (Map<String, Object> row : rows) {
+            java.math.BigDecimal endQty = new java.math.BigDecimal(String.valueOf(row.get("endQty")));
+            java.math.BigDecimal inQty = new java.math.BigDecimal(String.valueOf(row.get("inQty")));
+            java.math.BigDecimal outQty = new java.math.BigDecimal(String.valueOf(row.get("outQty")));
+            java.math.BigDecimal endAmount = new java.math.BigDecimal(String.valueOf(row.get("endAmount")));
+            java.math.BigDecimal inAmount = new java.math.BigDecimal(String.valueOf(row.get("inAmount")));
+            java.math.BigDecimal outAmount = new java.math.BigDecimal(String.valueOf(row.get("outAmount")));
+            row.put("beginQty", endQty.subtract(inQty).add(outQty));
+            row.put("beginAmount", endAmount.subtract(inAmount).add(outAmount));
+        }
+        return CommonResult.success(rows);
+    }
 }

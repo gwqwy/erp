@@ -91,6 +91,10 @@ import reportStockAbc from '@/views/report/stock-abc/index.vue'
 import reportCustomerStatement from '@/views/report/customer-statement/index.vue'
 import infraImport from '@/views/infra/import/index.vue'
 
+import reportStockFlow from '@/views/report/stock-flow/index.vue'
+import reportSupplierStatement from '@/views/report/supplier-statement/index.vue'
+import systemMessage from '@/views/system/message/index.vue'
+
 export const viewModules: Record<string, any> = {
   'login/index': login,
   'dashboard/index': dashboard,
@@ -169,4 +173,7 @@ export const viewModules: Record<string, any> = {
   'report/stock-abc/index': reportStockAbc,
   'report/customer-statement/index': reportCustomerStatement,
   'infra/import/index': infraImport,
+  'report/stock-flow/index': reportStockFlow,
+  'report/supplier-statement/index': reportSupplierStatement,
+  'system/message/index': systemMessage,
 }

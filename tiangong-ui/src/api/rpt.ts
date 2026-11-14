@@ -12,3 +12,13 @@ export const analysisApi = {
   customerStatement: (params: { partnerId: string; from: string; to: string }) =>
     get<any>('/admin-api/rpt/customer-statement', params)
 }
+
+// ========== V16：收发存汇总 / 供应商对账单 ==========
+export const stockFlowApi = {
+  summary: (params: { from: string; to: string }) => get<any[]>('/admin-api/rpt/stock-flow', params)
+}
+
+export const supplierStatementApi = {
+  detail: (params: { partnerId: string; from: string; to: string }) =>
+    get<any>('/admin-api/rpt/supplier-statement', params)
+}

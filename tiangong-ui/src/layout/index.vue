@@ -36,6 +36,26 @@
           <el-breadcrumb-item :to="{ path: '/dashboard' }">首页</el-breadcrumb-item>
           <el-breadcrumb-item v-if="$route.meta?.title">{{ $route.meta.title }}</el-breadcrumb-item>
         </el-breadcrumb>
+        <el-dropdown trigger="click" @command="onBellCommand" style="margin-right:16px">
+          <span class="user-entry" style="gap:2px">
+            <el-badge :value="unreadCount" :hidden="!unreadCount" :max="99">
+              <el-icon :size="18"><Bell /></el-icon>
+            </el-badge>
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu style="min-width:280px">
+              <el-dropdown-item v-for="msg in unreadTop" :key="msg.id" :command="'read:' + msg.id" divided>
+                <div style="max-width:280px">
+                  <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ msg.title }}</div>
+                  <div style="font-size:12px;color:#909399;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ msg.content }}</div>
+                </div>
+              </el-dropdown-item>
+              <el-dropdown-item v-if="!unreadTop.length" disabled divided>暂无未读消息</el-dropdown-item>
+              <el-dropdown-item command="readall" divided>全部标记已读</el-dropdown-item>
+              <el-dropdown-item command="center" divided>进入消息中心</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
         <el-dropdown @command="onCommand">
           <span class="user-entry">
             <el-icon><UserFilled /></el-icon>
@@ -57,10 +77,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useMenuStore } from '@/stores/menu'
+import { messageApi } from '@/api/system'
+import { Bell } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -68,6 +90,40 @@ const userStore = useUserStore()
 const menuStore = useMenuStore()
 
 const activeMenu = computed(() => route.path)
+
+// ===== 顶栏消息铃铛：30s 轮询未读数 =====
+const unreadCount = ref(0)
+const unreadTop = ref<any[]>([])
+
+async function refreshBell() {
+  try {
+    unreadCount.value = Number(await messageApi.myUnreadCount()) || 0
+    unreadTop.value = (await messageApi.myUnread()).slice(0, 5)
+  } catch {
+    // 静默：轮询失败不打扰用户
+  }
+}
+
+async function onBellCommand(cmd: string) {
+  if (cmd === 'readall') {
+    await messageApi.readAll()
+  } else if (cmd.startsWith('read:')) {
+    await messageApi.read(cmd.slice(5))
+  } else if (cmd === 'center') {
+    router.push('/system/message')
+    return
+  }
+  refreshBell()
+}
+
+let bellTimer: any = null
+onMounted(() => {
+  refreshBell()
+  bellTimer = setInterval(refreshBell, 30000)
+})
+onBeforeUnmount(() => {
+  if (bellTimer) clearInterval(bellTimer)
+})
 
 function resolvePath(dirPath: string, childPath: string) {
   return `${dirPath}/${childPath}`.replace(/\/+/g, '/')

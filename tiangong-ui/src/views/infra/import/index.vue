@@ -24,9 +24,12 @@
       </el-tab-pane>
     </el-tabs>
 
-    <el-upload :show-file-list="false" :auto-upload="false" accept=".csv,.txt" :on-change="onPick">
-      <el-button type="primary" :loading="uploading">选择 CSV 并导入</el-button>
-    </el-upload>
+    <div style="display:flex;gap:10px">
+      <el-upload :show-file-list="false" :auto-upload="false" accept=".csv,.txt" :on-change="onPick">
+        <el-button type="primary" :loading="uploading">选择 CSV 并导入</el-button>
+      </el-upload>
+      <el-button @click="downloadTemplate">下载{{ tabName }}模板</el-button>
+    </div>
 
     <el-alert v-if="result" :type="result.fail === 0 ? 'success' : 'warning'" :closable="false" style="margin-top:12px">
       <div>共 {{ result.total }} 行：成功 {{ result.success }}，失败 {{ result.fail }}</div>
@@ -36,13 +39,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { bulkImportApi } from '@/api/infra'
 
 const tab = ref('products')
 const uploading = ref(false)
 const result = ref<any>(null)
+
+const tabName = computed(() => ({ products: '商品', partners: '往来单位', 'stock-openings': '库存期初' }[tab.value] || ''))
+
+const TEMPLATES: Record<string, string> = {
+  products: '编码,名称,规格,采购价,销售价,安全库存\nP001,示例商品,规格A,10,20,5\nP002,示例商品B,,8,15,3',
+  partners: '名称,类型,联系人,电话,地址,备注\n示例客户,customer,张三,13800000000,北京市,',
+  'stock-openings': '仓库编码,商品编码,数量,成本价\n主仓库,P001,100,10'
+}
+
+function downloadTemplate() {
+  const csv = TEMPLATES[tab.value] || ''
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = (tabName.value || '导入') + '导入模板.csv'
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
 
 async function onPick(file: any) {
   const raw: File = file.raw

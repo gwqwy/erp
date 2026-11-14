@@ -51,3 +51,11 @@ export const dictApi = {
   dataUpdate: (params: any) => put(`${PREFIX}/dict/data/update`, null, params),
   dataDelete: (id: string) => del(`${PREFIX}/dict/data/delete`, { id })
 }
+
+// ========== V16：站内消息（顶栏铃铛 / 消息中心） ==========
+export const messageApi = {
+  myUnread: () => get<any[]>('/admin-api/system/message/my-unread'),
+  myUnreadCount: () => get<number>('/admin-api/system/message/my-unread-count'),
+  read: (id: string) => post('/admin-api/system/message/read', null, { id }),
+  readAll: () => post('/admin-api/system/message/read-all')
+}

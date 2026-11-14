@@ -68,4 +68,49 @@ public interface RptAnalysisMapper {
             "WHERE p.deleted = 0 AND p.stock_min IS NOT NULL AND p.stock_min > 0 " +
             "GROUP BY p.id, p.name, p.stock_min HAVING totalQty < p.stock_min ORDER BY totalQty / p.stock_min ASC")
     List<Map<String, Object>> lowStockProducts();
+
+    // ========== V16：供应商对账单 / 收发存汇总 ==========
+
+    /** 对账单：采购入库行（借方 = 应付增加） */
+    @Select("SELECT inbound_date AS date, no, total_amount AS debit, 0 AS credit " +
+            "FROM erp_purchase_inbound WHERE supplier_id = #{partnerId} AND status >= 30 AND deleted = 0 " +
+            "AND inbound_date BETWEEN #{from} AND #{to}")
+    List<Map<String, Object>> supplierInboundRows(@Param("partnerId") Long partnerId,
+                                                  @Param("from") String from, @Param("to") String to);
+
+    /** 对账单：付款行（贷方） */
+    @Select("SELECT payment_date AS date, no, 0 AS debit, amount AS credit " +
+            "FROM erp_finance_payment WHERE partner_id = #{partnerId} AND status >= 30 AND deleted = 0 " +
+            "AND payment_date BETWEEN #{from} AND #{to}")
+    List<Map<String, Object>> supplierPaymentRows(@Param("partnerId") Long partnerId,
+                                                  @Param("from") String from, @Param("to") String to);
+
+    /** 期初借方：from 之前累计入库 */
+    @Select("SELECT IFNULL(SUM(total_amount), 0) FROM erp_purchase_inbound " +
+            "WHERE supplier_id = #{partnerId} AND status >= 30 AND deleted = 0 AND inbound_date < #{before}")
+    BigDecimal supplierOpeningDebit(@Param("partnerId") Long partnerId, @Param("before") String before);
+
+    /** 期初贷方：from 之前累计付款 */
+    @Select("SELECT IFNULL(SUM(amount), 0) FROM erp_finance_payment " +
+            "WHERE partner_id = #{partnerId} AND status >= 30 AND deleted = 0 AND payment_date < #{before}")
+    BigDecimal supplierOpeningCredit(@Param("partnerId") Long partnerId, @Param("before") String before);
+
+    /** 收发存汇总：期末结存 + 本期收发（erp_stock_quant / erp_stock_move 均无 deleted 列） */
+    @Select("SELECT p.id AS productId, p.no AS productNo, p.name AS productName, " +
+            "IFNULL(qs.qty, 0) AS endQty, IFNULL(qs.amount, 0) AS endAmount, " +
+            "IFNULL(m.inQty, 0) AS inQty, IFNULL(m.inAmount, 0) AS inAmount, " +
+            "IFNULL(m.outQty, 0) AS outQty, IFNULL(m.outAmount, 0) AS outAmount " +
+            "FROM erp_product p " +
+            "LEFT JOIN (SELECT product_id, SUM(qty) qty, SUM(qty * IFNULL(avg_cost, 0)) amount " +
+            "  FROM erp_stock_quant GROUP BY product_id) qs ON qs.product_id = p.id " +
+            "LEFT JOIN (SELECT product_id, " +
+            "  SUM(CASE WHEN direction = 1 THEN qty ELSE 0 END) AS inQty, " +
+            "  SUM(CASE WHEN direction = 1 THEN IFNULL(amount, 0) ELSE 0 END) AS inAmount, " +
+            "  SUM(CASE WHEN direction = -1 THEN -qty ELSE 0 END) AS outQty, " +
+            "  SUM(CASE WHEN direction = -1 THEN -IFNULL(amount, 0) ELSE 0 END) AS outAmount " +
+            "  FROM erp_stock_move WHERE move_time >= #{from} " +
+            "  AND move_time < DATE_ADD(#{to}, INTERVAL 1 DAY) GROUP BY product_id) m ON m.product_id = p.id " +
+            "WHERE p.deleted = 0 " +
+            "HAVING endQty <> 0 OR inQty <> 0 OR outQty <> 0 ORDER BY p.no")
+    List<Map<String, Object>> stockFlowSummary(@Param("from") String from, @Param("to") String to);
 }

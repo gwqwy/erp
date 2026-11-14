@@ -13,6 +13,18 @@
       </el-col>
     </el-row>
 
+    <!-- 待办提醒 -->
+    <el-row :gutter="16" style="margin-top:16px">
+      <el-col :span="8" v-for="card in todoCards" :key="card.label">
+        <el-card shadow="hover" class="todo-card" @click="card.go">
+          <div class="todo-row">
+            <span class="todo-label">{{ card.label }}</span>
+            <el-badge :value="card.value" :type="card.value > 0 ? 'danger' : 'info'" :max="99" />
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <!-- 趋势图 -->
     <el-card shadow="never" style="margin-top: 16px">
       <template #header>
@@ -37,13 +49,37 @@
 import { computed, onMounted, ref } from 'vue'
 import * as echarts from 'echarts'
 import { dashboardApi } from '@/api/rpt'
+import { bpmApi } from '@/api/bpm'
+import { messageApi } from '@/api/system'
+import { alertScanApi } from '@/api/stock'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useMenuStore } from '@/stores/menu'
 
 const userStore = useUserStore()
 const menuStore = useMenuStore()
 
+const router = useRouter()
 const summary = ref<any>(null)
+const todoCards = ref<Array<{ label: string; value: number; go: () => void }>>([
+  { label: '待办审批任务', value: 0, go: () => router.push('/bpm/my-tasks') },
+  { label: '未读站内消息', value: 0, go: () => router.push('/system/message') },
+  { label: '低库存预警商品', value: 0, go: () => router.push('/stk/alert') }
+])
+
+async function loadTodos() {
+  try {
+    const tasks = await bpmApi.myTasks()
+    todoCards.value[0].value = Array.isArray(tasks) ? tasks.length : Number(tasks?.total ?? 0) || 0
+  } catch { /* 审批接口失败不阻塞 */ }
+  try {
+    todoCards.value[1].value = Number(await messageApi.myUnreadCount()) || 0
+  } catch { /* 消息接口失败不阻塞 */ }
+  try {
+    const lows = await alertScanApi.lowList()
+    todoCards.value[2].value = (lows || []).length
+  } catch { /* 预警接口失败不阻塞 */ }
+}
 const chartRef = ref<HTMLDivElement>()
 let chart: echarts.ECharts | null = null
 
@@ -87,6 +123,7 @@ function renderChart() {
 }
 
 onMounted(async () => {
+  loadTodos()
   summary.value = await dashboardApi.summary(6)
   renderChart()
   window.addEventListener('resize', () => chart?.resize())
@@ -107,4 +144,8 @@ const countMenus = computed(() => {
 .stat-value { font-size: 22px; font-weight: 700; color: #303133; margin: 6px 0 2px; }
 .stat-suffix { color: #c0c4cc; font-size: 12px; }
 .trend-chart { height: 320px; }
+
+.todo-card { cursor: pointer; }
+.todo-row { display: flex; justify-content: space-between; align-items: center; }
+.todo-label { font-size: 14px; color: #606266; }
 </style>
