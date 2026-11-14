@@ -43,3 +43,11 @@ export const alertScanApi = {
   scanNow: () => post<any>('/admin-api/stk/alert/scan'),
   lowList: () => get<any[]>('/admin-api/stk/alert/low-list')
 }
+
+// ========== V17：序列号追溯 ==========
+export const serialApi = {
+  trace: (serialNo: string) => get<any[]>('/admin-api/stk/serial/trace', { serialNo }),
+  inStock: (productId: string) => get<any[]>('/admin-api/stk/serial/in-stock', { productId }),
+  register: (params: any) => post('/admin-api/stk/serial/register', null, params),
+  consume: (params: any) => post('/admin-api/stk/serial/consume', null, params)
+}

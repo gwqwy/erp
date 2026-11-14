@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,5 +71,46 @@ public class ExportController {
         response.setHeader("Content-Disposition", "attachment; filename=" + table + ".csv");
         response.getOutputStream().write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF});
         response.getOutputStream().write(csv.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** 通用 Excel 导出：同一白名单，xlsx 格式 */
+    @GetMapping("/xlsx")
+    @PreAuthorize("@ss.hasPermission('infra:export:csv')")
+    public void exportXlsx(@RequestParam("table") String table, HttpServletResponse response) throws Exception {
+        if (!WHITELIST.contains(table)) {
+            response.setStatus(400);
+            response.getWriter().write("table not allowed");
+            return;
+        }
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT * FROM " + table + " WHERE deleted = 0 ORDER BY id LIMIT 100000");
+
+        try (Workbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet(table);
+            java.util.List<String> columns = new java.util.ArrayList<>();
+            if (!rows.isEmpty()) {
+                columns.addAll(rows.get(0).keySet());
+            }
+            Row head = sheet.createRow(0);
+            for (int i = 0; i < columns.size(); i++) {
+                Cell c = head.createCell(i);
+                c.setCellValue(columns.get(i));
+            }
+            for (int r = 0; r < rows.size(); r++) {
+                Row row = sheet.createRow(r + 1);
+                for (int i = 0; i < columns.size(); i++) {
+                    Object v = rows.get(r).get(columns.get(i));
+                    if (v == null) continue;
+                    if (v instanceof Number n) row.createCell(i).setCellValue(n.doubleValue());
+                    else if (v instanceof java.time.LocalDateTime dt) row.createCell(i).setCellValue(dt.toString());
+                    else if (v instanceof java.time.LocalDate d) row.createCell(i).setCellValue(d.toString());
+                    else if (v instanceof Boolean b) row.createCell(i).setCellValue(b);
+                    else row.createCell(i).setCellValue(String.valueOf(v));
+                }
+            }
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment; filename=" + table + ".xlsx");
+            wb.write(response.getOutputStream());
+        }
     }
 }

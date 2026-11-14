@@ -35,6 +35,9 @@ public interface SaleOrderService {
 
     void voidOrder(Long id);
 
+    /** 更新累计订金 */
+    void updateDeposit(Long id, java.math.BigDecimal depositAmount);
+
     record Item(Long productId, Long unitId, BigDecimal qty, BigDecimal price,
                 BigDecimal taxRate, String remark) {
     }

@@ -11,6 +11,7 @@ const config: OrderConfig = {
   permission: 'pur:order',
   bizType: 'pur_order',
   headKey: 'order',
+  deposit: { get: purchaseOrderApi.depositGet, register: purchaseOrderApi.depositRegister },
   api: {
     page: purchaseOrderApi.page,
     detail: purchaseOrderApi.detail,

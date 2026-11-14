@@ -95,6 +95,8 @@ import reportStockFlow from '@/views/report/stock-flow/index.vue'
 import reportSupplierStatement from '@/views/report/supplier-statement/index.vue'
 import systemMessage from '@/views/system/message/index.vue'
 
+import moreSerialTrace from '@/views/more/serial-trace/index.vue'
+
 export const viewModules: Record<string, any> = {
   'login/index': login,
   'dashboard/index': dashboard,
@@ -176,4 +178,5 @@ export const viewModules: Record<string, any> = {
   'report/stock-flow/index': reportStockFlow,
   'report/supplier-statement/index': reportSupplierStatement,
   'system/message/index': systemMessage,
+  'more/serial-trace/index': moreSerialTrace,
 }

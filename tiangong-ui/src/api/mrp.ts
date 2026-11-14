@@ -44,3 +44,8 @@ export const mrpPlanApi = {
   toPurchaseOrder: (params: { id: string; supplierId: string }) =>
     post<any>(`${PREFIX}/plan/to-purchase-order`, null, params)
 }
+
+// ========== V17：BOM 成本卷算 ==========
+export const costApi = {
+  rollup: (productId: string) => get<any>(`${PREFIX}/calc/cost`, { productId })
+}

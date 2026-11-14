@@ -35,6 +35,8 @@ public class ErpSaleOrderDO extends BaseDO {
 
     private String remark;
 
+    private java.math.BigDecimal depositAmount;
+
     private Integer status;
 
     private Long auditUserId;

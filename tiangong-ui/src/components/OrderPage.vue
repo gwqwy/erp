@@ -48,6 +48,7 @@
                 <el-dropdown-menu>
                   <slot name="actions" :row="row" />
                   <el-dropdown-item command="attach">附件</el-dropdown-item>
+                  <el-dropdown-item v-if="config.deposit" command="deposit">订金</el-dropdown-item>
                   <el-dropdown-item command="print">打印</el-dropdown-item>
                   <el-dropdown-item v-if="canEdit(row) && config.api.update" v-perm="config.permission + ':update'"
                                     command="edit">编辑</el-dropdown-item>
@@ -183,6 +184,22 @@
           </el-table-column>
         </el-table>
       </el-dialog>
+
+      <!-- 订金登记对话框 -->
+      <el-dialog v-model="depositDialog" :title="'订金 · ' + config.title" width="480px">
+        <el-descriptions :column="2" border style="margin-bottom:16px">
+          <el-descriptions-item label="单号">{{ depositRow?.no }}</el-descriptions-item>
+          <el-descriptions-item label="订单总额">{{ depositTotal }}</el-descriptions-item>
+          <el-descriptions-item label="已收订金">{{ depositCurrent }}</el-descriptions-item>
+          <el-descriptions-item label="剩余待收">{{ Math.max(depositTotal - depositCurrent, 0) }}</el-descriptions-item>
+        </el-descriptions>
+        <el-input-number v-model="depositAmount" :min="0.01" :precision="2" :controls="false"
+                         style="width: 100%" placeholder="本次登记金额" />
+        <template #footer>
+          <el-button @click="depositDialog = false">取消</el-button>
+          <el-button type="primary" :loading="depositSaving" @click="saveDeposit">登记订金</el-button>
+        </template>
+      </el-dialog>
     </el-card>
   </div>
 </template>
@@ -244,6 +261,11 @@ export interface OrderConfig {
   reversible?: boolean
   /** detail 响应中表头字段名：order / inbound / outbound */
   headKey: string
+  /** 订金管理（销售/采购订单可选配置） */
+  deposit?: {
+    get: (id: string) => Promise<any>
+    register: (id: string, amount: number) => Promise<any>
+  }
   masterFields: OrderMasterField[]
   itemFields: OrderItemField[]
   /** 来源单据（入库引用采购订单等） */
@@ -500,6 +522,7 @@ function onMoreCommand(cmd: string, row: any) {
     case 'reverse': handleReverse(row); break
     case 'delete': handleDelete(row); break
     case 'attach': openAttach(row); break
+    case 'deposit': openDeposit(row); break
     case 'print': window.open('/print/order?type=' + props.config.bizType + '&id=' + row.id, '_blank'); break
   }
 }
@@ -537,6 +560,37 @@ async function removeAttach(row: any) {
   await ElMessageBox.confirm('确认删除该附件吗？', '提示', { type: 'warning' })
   await fileApi.delete(row.id)
   await loadAttach()
+}
+
+// ========== 订金（销售/采购订单） ==========
+const depositDialog = ref(false)
+const depositRow = ref<any>(null)
+const depositCurrent = ref(0)
+const depositTotal = ref(0)
+const depositAmount = ref<number>(1)
+const depositSaving = ref(false)
+
+async function openDeposit(row: any) {
+  if (!props.config.deposit) return
+  const order = await props.config.deposit.get(row.id)
+  depositRow.value = row
+  depositCurrent.value = Number(order.depositAmount || 0)
+  depositTotal.value = Number(order.totalAmountTax || order.totalAmount || 0)
+  depositAmount.value = 1
+  depositDialog.value = true
+}
+
+async function saveDeposit() {
+  if (!props.config.deposit || !depositRow.value) return
+  depositSaving.value = true
+  try {
+    await props.config.deposit.register(depositRow.value.id, depositAmount.value)
+    ElMessage.success('订金已登记')
+    depositDialog.value = false
+    loadList()
+  } finally {
+    depositSaving.value = false
+  }
 }
 
 function fmtAttachSize(n: number) {

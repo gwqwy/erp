@@ -11,6 +11,7 @@ const config: OrderConfig = {
   permission: 'sal:order',
   bizType: 'sal_order',
   headKey: 'order',
+  deposit: { get: saleOrderApi.depositGet, register: saleOrderApi.depositRegister },
   api: {
     page: saleOrderApi.page,
     detail: saleOrderApi.detail,

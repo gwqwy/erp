@@ -51,6 +51,7 @@ public class PurchaseInboundServiceImpl implements PurchaseInboundService {
     private final ErpPurchaseOrderItemMapper orderItemMapper;
     private final SerialNoApi serialNoApi;
     private final StockPostingApi stockPostingApi;
+    private final cn.tiangong.module.stk.api.SerialTrackApi serialTrackApi;
     private final ChatterService chatterService;
     private final ApplicationEventPublisher eventPublisher;
     private final FinApi finApi;
@@ -168,6 +169,9 @@ public class PurchaseInboundServiceImpl implements PurchaseInboundService {
                     inbound.getSupplierId(), null));
         }
         stockPostingApi.submit(commands);
+
+        // 序列号登记：isSerial 商品明细 remark 中的序列号（逗号/空格分隔）
+        registerSerialsIfAny(inbound.getWarehouseId(), inbound.getId(), inbound.getNo(), items);
 
         // 2. 回写订单执行进度（仅带 orderItemId 的行）
         for (ErpPurchaseInboundItemDO item : items) {
@@ -313,5 +317,29 @@ public class PurchaseInboundServiceImpl implements PurchaseInboundService {
             throw of(6_01, 6, "采购入库单不存在");
         }
         return inbound;
+    }
+
+    private void registerSerialsIfAny(Long warehouseId, Long inboundId, String inboundNo,
+                                      java.util.List<cn.tiangong.module.pur.dal.dataobject.ErpPurchaseInboundItemDO> items) {
+        try {
+            for (ErpPurchaseInboundItemDO item : items) {
+                java.util.List<String> sns = parseSerials(item.getRemark());
+                if (sns.isEmpty()) continue;
+                serialTrackApi.registerInbound(sns, item.getProductId(), warehouseId, inboundNo);
+            }
+        } catch (Exception e) {
+            cn.tiangong.framework.web.core.exception.ServiceException.of(6_04, 9,
+                    "序列号登记失败: " + e.getMessage());
+        }
+    }
+
+    private java.util.List<String> parseSerials(String remark) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        if (remark == null || remark.isBlank()) return out;
+        for (String token : remark.split("[,，;；\\s]+")) {
+            String t = token.trim();
+            if (!t.isEmpty() && t.length() >= 3) out.add(t);
+        }
+        return out;
     }
 }

@@ -65,4 +65,14 @@ export function del<T = any>(url: string, params?: any): Promise<T> {
   return instance.delete(url, { params }) as Promise<T>
 }
 
+/** Blob 下载（带鉴权），用于报表/单据 xlsx 导出 */
+export async function downloadFile(url: string, params: any, fileName: string) {
+  const res: any = await instance.get(url, { params, responseType: 'blob' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(res.data)
+  a.download = fileName
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
+
 export default instance

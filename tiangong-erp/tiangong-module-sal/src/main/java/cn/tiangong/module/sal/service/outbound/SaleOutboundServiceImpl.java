@@ -50,6 +50,7 @@ public class SaleOutboundServiceImpl implements SaleOutboundService {
     private final ErpSaleOrderItemMapper orderItemMapper;
     private final SerialNoApi serialNoApi;
     private final StockPostingApi stockPostingApi;
+    private final cn.tiangong.module.stk.api.SerialTrackApi serialTrackApi;
     private final ChatterService chatterService;
     private final ApplicationEventPublisher eventPublisher;
     private final FinApi finApi;
@@ -184,6 +185,9 @@ public class SaleOutboundServiceImpl implements SaleOutboundService {
         List<BigDecimal> costs = stockPostingApi.submit(commands);
         BigDecimal costAmount = costs.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // 序列号核销：isSerial 商品明细 remark 中的序列号
+        consumeSerialsIfAny(outbound.getWarehouseId(), outbound.getId(), outbound.getNo(), items);
+
         // 2. 回写订单执行进度
         for (ErpSaleOutboundItemDO item : items) {
             if (item.getOrderItemId() == null) {
@@ -233,6 +237,7 @@ public class SaleOutboundServiceImpl implements SaleOutboundService {
                     item.getPrice(), outbound.getCustomerId(), null));
         }
         stockPostingApi.submit(commands);
+
 
         // 3. 红字凭证（借贷互换：冲收入与应收）
         String redVoucherNo = finApi.reverseVoucher("sale_out", id);
@@ -326,5 +331,29 @@ public class SaleOutboundServiceImpl implements SaleOutboundService {
             throw of(7_01, 6, "销售出库单不存在");
         }
         return outbound;
+    }
+
+    private void consumeSerialsIfAny(Long warehouseId, Long outboundId, String outboundNo,
+                                     java.util.List<cn.tiangong.module.sal.dal.dataobject.ErpSaleOutboundItemDO> items) {
+        try {
+            for (ErpSaleOutboundItemDO item : items) {
+                java.util.List<String> sns = parseSerials(item.getRemark());
+                if (sns.isEmpty()) continue;
+                serialTrackApi.consumeOutbound(sns, item.getProductId(), warehouseId, outboundNo);
+            }
+        } catch (Exception e) {
+            throw cn.tiangong.framework.web.core.exception.ServiceException.of(7_04, 9,
+                    "序列号核销失败: " + e.getMessage());
+        }
+    }
+
+    private java.util.List<String> parseSerials(String remark) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        if (remark == null || remark.isBlank()) return out;
+        for (String token : remark.split("[,，;；\\s]+")) {
+            String t = token.trim();
+            if (!t.isEmpty() && t.length() >= 3) out.add(t);
+        }
+        return out;
     }
 }

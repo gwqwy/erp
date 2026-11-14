@@ -48,4 +48,16 @@ public class ProductApiImpl implements ProductApi {
                 .map(p -> new StockLimit(p.getId(), p.getName(), p.getStockMin(), p.getStockMax()))
                 .toList();
     }
+
+    @Override
+    public java.util.Map<Long, java.math.BigDecimal> getPurchasePrices(java.util.Set<Long> productIds) {
+        java.util.Map<Long, java.math.BigDecimal> out = new java.util.HashMap<>();
+        if (productIds == null || productIds.isEmpty()) return out;
+        for (cn.tiangong.module.bas.dal.dataobject.ErpProductDO p : productMapper.selectList(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<cn.tiangong.module.bas.dal.dataobject.ErpProductDO>()
+                        .in(cn.tiangong.module.bas.dal.dataobject.ErpProductDO::getId, productIds))) {
+            out.put(p.getId(), p.getPurchasePrice() == null ? java.math.BigDecimal.ZERO : p.getPurchasePrice());
+        }
+        return out;
+    }
 }

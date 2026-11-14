@@ -20,6 +20,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -44,7 +51,7 @@ public class BulkImportController {
     @PostMapping("/products")
     @PreAuthorize("@ss.hasPermission('infra:import:create')")
     public CommonResult<ImportResult> importProducts(@RequestParam("file") MultipartFile file) throws IOException {
-        List<String[]> rows = readCsv(file);
+        List<String[]> rows = readRows(file);
         ImportResult result = new ImportResult(rows.size(), 0, 0, new ArrayList<>());
         for (int i = 0; i < rows.size(); i++) {
             String[] cells = rows.get(i);
@@ -83,7 +90,7 @@ public class BulkImportController {
     @PostMapping("/partners")
     @PreAuthorize("@ss.hasPermission('infra:import:create')")
     public CommonResult<ImportResult> importPartners(@RequestParam("file") MultipartFile file) throws IOException {
-        List<String[]> rows = readCsv(file);
+        List<String[]> rows = readRows(file);
         ImportResult result = new ImportResult(rows.size(), 0, 0, new ArrayList<>());
         for (int i = 0; i < rows.size(); i++) {
             String[] cells = rows.get(i);
@@ -124,7 +131,7 @@ public class BulkImportController {
     @PostMapping("/stock-openings")
     @PreAuthorize("@ss.hasPermission('infra:import:create')")
     public CommonResult<ImportResult> importStockOpenings(@RequestParam("file") MultipartFile file) throws IOException {
-        List<String[]> rows = readCsv(file);
+        List<String[]> rows = readRows(file);
         ImportResult result = new ImportResult(rows.size(), 0, 0, new ArrayList<>());
         for (int i = 0; i < rows.size(); i++) {
             String[] cells = rows.get(i);
@@ -173,11 +180,44 @@ public class BulkImportController {
 
     // ========== helpers ==========
 
+    private List<String[]> readRows(MultipartFile file) throws IOException {
+        String name = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase();
+        if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
+            return readExcel(file);
+        }
+        return readCsv(file);
+    }
+
+    /** Excel 读取：所有单元格按文本取值，空行跳过，首行表头跳过 */
+    private List<String[]> readExcel(MultipartFile file) throws IOException {
+        List<String[]> rows = new ArrayList<>();
+        DataFormatter fmt = new DataFormatter();
+        try (InputStream in = file.getInputStream(); Workbook wb = WorkbookFactory.create(in)) {
+            Sheet sheet = wb.getSheetAt(0);
+            for (Row row : sheet) {
+                int last = row.getLastCellNum();
+                if (last <= 0) continue;
+                String[] cells = new String[last];
+                boolean allBlank = true;
+                for (int i = 0; i < last; i++) {
+                    Cell cell = row.getCell(i);
+                    String v = cell == null ? "" : fmt.formatCellValue(cell).trim();
+                    cells[i] = v;
+                    if (!v.isEmpty()) allBlank = false;
+                }
+                if (allBlank) continue;
+                if (rows.isEmpty() && (cells[0].contains("编码") || cells[0].contains("名称"))) continue;
+                rows.add(cells);
+            }
+        }
+        return rows;
+    }
+
     private List<String[]> readCsv(MultipartFile file) throws IOException {
         String content = new String(file.getBytes(), StandardCharsets.UTF_8);
         if (content.startsWith("\uFEFF")) content = content.substring(1);
         List<String[]> rows = new ArrayList<>();
-        String[] lines = content.split("\r?\n");
+        String[] lines = content.split("\\r?\\n");
         for (String line : lines) {
             if (line.isBlank()) continue;
             String[] cells = line.split(",", -1);

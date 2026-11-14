@@ -138,6 +138,18 @@ public class SaleOrderServiceImpl implements SaleOrderService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public void updateDeposit(Long id, java.math.BigDecimal depositAmount) {
+        ErpSaleOrderDO order = orderMapper.selectById(id);
+        if (order == null) {
+            throw of(7_01, 2, "订单不存在: " + id);
+        }
+        order.setDepositAmount(depositAmount);
+        orderMapper.updateById(order);
+        chatterService.trace(BIZ_TYPE, id, "订金更新为 " + depositAmount, null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void voidOrder(Long id) {
         ErpSaleOrderDO order = getOrder(id);
         OrderStateChecker.require(order.getStatus(), order.getNo(), BizOrderStatus.DRAFT);

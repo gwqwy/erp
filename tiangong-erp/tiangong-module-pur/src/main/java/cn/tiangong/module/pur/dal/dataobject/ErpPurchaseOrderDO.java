@@ -35,6 +35,8 @@ public class ErpPurchaseOrderDO extends BaseDO {
 
     private String remark;
 
+    private java.math.BigDecimal depositAmount;
+
     /** 见 BizOrderStatus：10 草稿 30 已审核 40 已完成 50 已作废 */
     private Integer status;
 

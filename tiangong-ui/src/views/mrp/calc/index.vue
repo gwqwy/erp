@@ -22,7 +22,35 @@
             <el-select v-model="row.productId" filterable style="width: 100%">
               <el-option v-for="p in products" :key="p.value" :label="p.label" :value="p.value" />
             </el-select>
-          </template>
+          
+    <!-- V17：BOM 成本卷算 -->
+    <el-card shadow="never" style="margin-top: 16px">
+      <div class="table-toolbar">
+        <span style="font-weight: 600">BOM 成本卷算</span>
+        <span style="color: #909399; font-size: 12px">按默认 BOM 递归卷算材料成本（叶子取采购价），对比销售价得毛利率</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
+        <el-select v-model="costProductId" filterable placeholder="选择产品" style="width:280px">
+          <el-option v-for="p in products" :key="p.value" :label="p.label" :value="p.value" />
+        </el-select>
+        <el-button type="primary" :disabled="!costProductId" :loading="costLoading" @click="runCost">卷算成本</el-button>
+      </div>
+      <div v-if="costResult">
+        <el-tag size="large" style="margin-bottom:12px">
+          {{ costResult.productName }} 单位材料成本：{{ Number(costResult.totalCost).toFixed(2) }}
+        </el-tag>
+        <el-table :data="costLines" border size="small">
+          <el-table-column prop="productName" label="产品" min-width="160" />
+          <el-table-column prop="source" label="来源" width="170" />
+          <el-table-column prop="qty" label="用量(份)" width="110" align="right" />
+          <el-table-column prop="unitPrice" label="单价" width="110" align="right" />
+          <el-table-column label="成本" width="110" align="right">
+            <template #default="{ row }">{{ Number(row.cost).toFixed(2) }}</template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </el-card>
+</template>
         </el-table-column>
         <el-table-column label="需求量" width="160">
           <template #default="{ row }">
@@ -64,7 +92,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { costApi } from '@/api/mrp'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { mrpCalcApi } from '@/api/mrp'
@@ -110,4 +139,18 @@ onMounted(async () => {
     value: p.id
   }))
 })
+
+const costProductId = ref('')
+const costLoading = ref(false)
+const costResult = ref<any>(null)
+const costLines = computed(() => (costResult.value?.lines || []).filter((l: any) => l.unitPrice != null))
+
+async function runCost() {
+  costLoading.value = true
+  try {
+    costResult.value = await costApi.rollup(costProductId.value)
+  } finally {
+    costLoading.value = false
+  }
+}
 </script>

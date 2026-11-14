@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +24,7 @@ import java.util.List;
 public class MrpCalcController {
 
     private final MrpCalcService calcService;
+    private final cn.tiangong.module.mrp.service.cost.BomCostService bomCostService;
 
     @PostMapping("/run")
     @PreAuthorize("@ss.hasPermission('mrp:calc:query')")
@@ -38,5 +40,13 @@ public class MrpCalcController {
     }
 
     public record CalcReqVO(@NotNull Long warehouseId, @NotEmpty List<DemandVO> demands) {
+    }
+
+    /** BOM 成本卷算（默认 BOM 递归 + 叶子采购价） */
+    @GetMapping("/cost")
+    @PreAuthorize("@ss.hasPermission('mrp:calc:query')")
+    public CommonResult<cn.tiangong.module.mrp.service.cost.BomCostService.RollupResult> cost(
+            @org.springframework.web.bind.annotation.RequestParam("productId") Long productId) {
+        return CommonResult.success(bomCostService.rollup(productId));
     }
 }

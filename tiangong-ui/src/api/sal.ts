@@ -3,6 +3,9 @@ import { del, get, post, put } from './http'
 const PREFIX = '/admin-api/sal'
 
 export const saleOrderApi = {
+  depositGet: (id: string) => get<any>('/admin-api/sal/order/deposit', { id }),
+  depositRegister: (id: string, amount: number) =>
+    post<number>('/admin-api/sal/order/deposit', null, { id, amount }),
   page: (params: any) => get<any>(`${PREFIX}/order/page`, params),
   detail: (id: string) => get<any>(`${PREFIX}/order/detail`, { id }),
   itemList: (orderId: string) => get<any[]>(`${PREFIX}/order/item-list`, { orderId }),

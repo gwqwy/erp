@@ -23,4 +23,7 @@ public interface ProductApi {
 
     record StockLimit(Long productId, String name, java.math.BigDecimal stockMin, java.math.BigDecimal stockMax) {
     }
+
+    /** 批量取采购价（用于 BOM 成本卷算） */
+    java.util.Map<Long, java.math.BigDecimal> getPurchasePrices(java.util.Set<Long> productIds);
 }

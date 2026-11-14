@@ -13,6 +13,11 @@
       </el-col>
     </el-row>
 
+    <div class="table-toolbar" style="margin-top:16px">
+      <span></span>
+      <el-button type="warning" @click="router.push('/screen')">进入经营大屏</el-button>
+    </div>
+
     <!-- 待办提醒 -->
     <el-row :gutter="16" style="margin-top:16px">
       <el-col :span="8" v-for="card in todoCards" :key="card.label">

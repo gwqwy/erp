@@ -22,6 +22,12 @@ const router = createRouter({
       meta: { title: '单据打印' }
     },
     {
+      path: '/screen',
+      name: 'Screen',
+      component: () => import('@/views/screen/index.vue'),
+      meta: { title: '经营大屏' }
+    },
+    {
       path: '/',
       name: 'layout',
       component: Layout,

@@ -1,7 +1,7 @@
 <template>
   <el-card shadow="never">
     <template #header>
-      <span>数据导入（CSV，UTF-8 编码，英文逗号分隔，首行表头自动跳过）</span>
+      <span>数据导入（CSV / Excel(xlsx)，首行表头自动跳过）</span>
     </template>
     <el-tabs v-model="tab">
       <el-tab-pane label="商品导入" name="products">
@@ -25,7 +25,7 @@
     </el-tabs>
 
     <div style="display:flex;gap:10px">
-      <el-upload :show-file-list="false" :auto-upload="false" accept=".csv,.txt" :on-change="onPick">
+      <el-upload :show-file-list="false" :auto-upload="false" accept=".csv,.txt,.xlsx,.xls" :on-change="onPick">
         <el-button type="primary" :loading="uploading">选择 CSV 并导入</el-button>
       </el-upload>
       <el-button @click="downloadTemplate">下载{{ tabName }}模板</el-button>
